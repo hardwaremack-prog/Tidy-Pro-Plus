@@ -2,7 +2,7 @@
 
 # Tidy Pro Plus for the Heltec V3 and V4
 
-**Install: https://charlesphillips3.github.io/Tidy-Pro-Plus-V3V4/** (Chrome or Edge, USB data cable)
+**Install: https://hardwaremack-prog.github.io/Tidy-Pro-Plus/** (Chrome or Edge, USB data cable)
 
 This is [Tidy Pro Plus](https://github.com/hardwaremack-prog/Tidy-Pro-Plus) with the **Heltec WiFi LoRa 32 V3** added
 next to the V4 and V4-R8. Pick the board at the top of the flasher.
@@ -19,7 +19,7 @@ next to the V4 and V4-R8. Pick the board at the top of the flasher.
   desktop, even when the board is on a Wi-Fi. Before it restarts it checks that the desktop page is open on a phone
   and that the phone can reach GitHub, and says what to do if not (on the hotspot: choose **Keep phone internet**,
   since with *Reach TidyOS* the phone has no internet while joined). Keep the page open and in front, screen on.
-* **Updates now come from this repo** (charlesphillips3.github.io/Tidy-Pro-Plus-V3V4), where the V3 / V4 builds are.
+* **Updates now come from this repo** (hardwaremack-prog.github.io/Tidy-Pro-Plus), where the V3 / V4 builds are.
   Boards on 3.4.39 or older still look in hardwaremack-prog/Tidy-Pro-Plus, so install 3.4.40 once from this
   flasher; after that Check for updates and Update using phone find the new versions here.
 
@@ -116,7 +116,7 @@ next to the V4 and V4-R8. Pick the board at the top of the flasher.
 
 The rest of this page is the Tidy Pro Plus notes; they apply to the V3 too unless they talk about The Shelf or dual boot.
 
-Tidy Pro Plus is a copy of [TidyOS Pro](https://github.com/CharlesPhillips3/TidyOS-Pro) with a better web flasher:
+Tidy Pro Plus is a copy of [TidyOS Pro](https://github.com/hardwaremack-prog/TidyOS-Pro) with a better web flasher:
 
 - **Tick what you want copied**: TidyOS Pro, The Shelf, The Shelf's web app, the bootloader and the boot menu, each on its own.
 - **See the free space as you tick**: a map of the board's 16 MB shows where each piece goes and how much is left

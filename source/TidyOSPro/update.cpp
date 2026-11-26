@@ -118,8 +118,8 @@ static bool verifyPeer(WiFiClientSecure & c, const std::string & host)
   return false;                                 // checked: the caller connects again with a fresh client
 }
 
-#define UPD_HOST "charlesphillips3.github.io"   // the Tidy-Pro-Plus-V3V4 repo's pages (where the V3 / V4 builds are)
-#define UPD_BASE "/Tidy-Pro-Plus-V3V4/"
+#define UPD_HOST "hardwaremack-prog.github.io"   // this repo's pages (where the V3 / V4 builds are)
+#define UPD_BASE "/Tidy-Pro-Plus/"
 #if defined(TIDYOS_V3)
   #define UPD_MANIFEST "manifest-pro-v3.json"
 #elif defined(TIDYOS_V4) && CONFIG_SPIRAM_MODE_OCT
