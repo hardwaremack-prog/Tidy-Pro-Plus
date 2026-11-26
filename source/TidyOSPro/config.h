@@ -24,7 +24,7 @@
 // Git-Store: the Cloudflare relay every board uses unless one is typed in (see gitstore/README.md)
 #define TIDYOS_STORE_URL ""
 
-#define TIDYOS_VERSION "3.4.40"
+#define TIDYOS_VERSION "3.4.41"
 
 // Apps left out of every build to make room for the RF tools (build with -DTIDY_BROWSER=1 etc. to put one back)
 #ifndef TIDY_BROWSER

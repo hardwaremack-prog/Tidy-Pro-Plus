@@ -972,8 +972,10 @@ static bool dnsKnown(const char * n, uint32_t & ip)
     // Android (Google, Samsung, Xiaomi, Huawei)
     "connectivitycheck.gstatic.com", "connectivitycheck.android.com", "clients1.google.com", "clients3.google.com",
     "play.googleapis.com", "www.google.com", "connect.rom.miui.com", "connectivitycheck.platform.hicloud.com",
-    // Apple
-    "captive.apple.com", "www.apple.com", "www.appleiphonecell.com", "www.thinkdifferent.us", "www.airport.us", "www.itools.info", "www.ibook.info",
+    // (not Apple's check names: an iPhone whose check fails keeps the hotspot for http://10.1.1.250 and sends
+    //  everything else over cellular, so the page can fetch the weather, news and updates for TidyOS. If its check
+    //  passed, it would send all its internet to the board, which has none. Before, this only worked when the
+    //  phone joined in the first moments after a start, before the board was answering.)
     // Windows
     "www.msftconnecttest.com", "www.msftncsi.com", "ipv6.msftconnecttest.com",
     // Firefox, Linux
