@@ -18,6 +18,10 @@ static inline int imax(int a, int b) { return a > b ? a : b; }
 static inline int imin(int a, int b) { return a < b ? a : b; }
 
 extern const char * gSDWiring;   // core.cpp: which wiring the SD card was found on
+#ifdef TIDYOS_XIAO
+#include <SPI.h>
+extern SPIClass gSharedSpi;      // core.cpp: the XIAO's radio and SD card share one SPI bus
+#endif
 bool gpsSwitchOn();              // core.cpp: the GPS start-up switch
 
 namespace rf {
@@ -28,7 +32,11 @@ Listen   * gListen = nullptr;
 Gnss       gGnss;
 std::mutex gMx;
 
+#ifdef TIDYOS_XIAO
+#define s_spi ::gSharedSpi            // core.cpp: the radio and the SD card share one bus (D8 / D9 / D10)
+#else
 static SPIClass s_spi(HSPI);          // the SD card has FSPI
+#endif
 static SX1262 * s_radio = nullptr;
 static volatile Mode s_mode = Mode::Off, s_want = Mode::Off;
 static volatile int  s_wantCh = 64;
@@ -78,14 +86,15 @@ void saveSettings()
 static void femReceive(bool on)
 {
 #ifndef HAS_FEM
-  (void)on; return;                    // V3: no front-end module
-#endif
+  (void)on; return;                    // V3 / XIAO: no front-end module
+#else
   pinMode(FEM_POWER, OUTPUT); pinMode(FEM_EN, OUTPUT);
   pinMode(FEM_CPS, OUTPUT);   pinMode(FEM_CTX, OUTPUT);
   digitalWrite(FEM_POWER, on ? HIGH : LOW);
   digitalWrite(FEM_EN, on ? HIGH : LOW);
   digitalWrite(FEM_CPS, LOW);          // never transmitting
   digitalWrite(FEM_CTX, LOW);          // receive through the LNA
+#endif
 }
 
 static void clearStats()
@@ -233,11 +242,15 @@ static void (*s_meshRx)(const uint8_t *, size_t) = nullptr;
 static std::mutex s_meshMx;
 static std::vector<std::vector<uint8_t>> s_meshTx;
 static volatile int s_meshSent = 0, s_meshHeard = 0;
+#ifdef TIDYOS_XIAO
+static const int8_t MESH_CHIP_DBM = 20;                       // Wio-SX1262: no front end, so the chip itself gives ~20 dBm
+#else
 static const int8_t MESH_CHIP_DBM = 9;                        // + ~11 dB from the V4's front end: about 20 dBm out
+#endif
 
 void meshEnable(bool on) {
   s_meshWanted = on;
-#ifdef TIDYOS_V3
+#if defined(TIDYOS_V3) || defined(TIDYOS_XIAO)
   if (on && !s_radio) begin();                    // (the V3 starts its radio only when it's wanted)
 #endif
 }
@@ -336,8 +349,14 @@ bool begin()
   if (!gSpec) gSpec = (Spectrum *)calloc(1, sizeof(Spectrum));
   gListen = new Listen();
   femReceive(true);
+#ifdef TIDYOS_XIAO
+  if (!strcmp(::gSDWiring, "none")) { pinMode(SD_CS, OUTPUT); digitalWrite(SD_CS, HIGH); }   // no card mounted: keep a fitted one quiet
+#endif
   s_spi.begin(LORA_SCK, LORA_MISO, LORA_MOSI, LORA_NSS);
   s_radio = new SX1262(new Module(LORA_NSS, LORA_DIO1, LORA_RST, LORA_BUSY, s_spi));
+#ifdef LORA_RXEN
+  s_radio->setRfSwitchPins(LORA_RXEN, RADIOLIB_NC);     // Wio-SX1262: RXEN high to receive, DIO2 for transmit
+#endif
   // FSK receiver, 234 kHz wide so each 200 kHz channel is covered; TCXO at 1.8 V on the V4
   int st = s_radio->beginFSK(915.0, 50.0, 25.0, 234.3, 0, 16, 1.8);
   if (st != RADIOLIB_ERR_NONE) {
@@ -370,7 +389,9 @@ void powerDown()
 #ifdef HAS_FEM
   digitalWrite(FEM_POWER, LOW);
 #endif
-#if CONFIG_SPIRAM_MODE_OCT
+#if defined(TIDYOS_XIAO)
+  // (no Vext: GPIO 40 is the radio's BUSY line on the XIAO)
+#elif CONFIG_SPIRAM_MODE_OCT
   pinMode(PIN_VEXT_R8, OUTPUT); digitalWrite(PIN_VEXT_R8, HIGH);  // Vext (OLED) off
 #else
 #ifdef HAS_GNSS
@@ -523,9 +544,9 @@ bool gnssStart()
   if (s_gnssState) return s_gnssState > 0;
 #ifndef HAS_GNSS
   s_gnssState = -1;
-  Serial.println("[TidyOS Pro] Heltec V3: no GNSS header, not looking for a GPS");
+  Serial.println("[TidyOS Pro] " TIDYOS_BOARD ": no GNSS header, not looking for a GPS");
   return false;
-#endif
+#else
   if (!gpsSwitchOn()) {
     s_gnssState = -1;
     Serial.println("[TidyOS Pro] GPS switched off (Switches): not looking for one");
@@ -560,6 +581,7 @@ bool gnssStart()
   s_gnssState = -1;
   Serial.println("[TidyOS Pro] no GNSS module on the header");
   return false;
+#endif
 }
 
 bool gnssFixed() { std::lock_guard<std::mutex> lk(gMx); return gGnss.fix; }

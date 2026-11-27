@@ -326,6 +326,9 @@ static void postMouse(int dx, int dy, int wheel, uint8_t buttons)
   if (s_dc && (cur.X != prev.X || cur.Y != prev.Y))
     s_dc->setMouseCursorPos(cur.X, cur.Y);
 #endif
+#ifdef TIDYOS_VGA_OUT
+  vgaS3Mouse(cur.X, cur.Y);  // XIAO: the monitor draws its own pointer on top of the picture
+#endif
 
   auto send = [&](uiEventID id, int changed) {
     uiEvent evt = uiEvent(nullptr, id);
@@ -891,7 +894,7 @@ void inputWebReleaseAll()
   if (s_mouse.buttons.left || s_mouse.buttons.right || s_mouse.buttons.middle) postMouse(0, 0, 0, 0);
 }
 
-#ifdef TIDYOS_HTML5
+#if defined(TIDYOS_HTML5) && !defined(TIDYOS_XIAO)
 static const bool s_bleOn = false;
 #else
 static const bool s_bleOn = true;

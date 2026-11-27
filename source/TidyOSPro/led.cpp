@@ -11,7 +11,9 @@
 #include "crashlog.h"
 #include "core.h"
 #include "config.h"
-#if defined(TIDYOS_V4) && CONFIG_SPIRAM_MODE_OCT
+#if defined(TIDYOS_XIAO)
+  #define LED_PIN -1              // XIAO: its LED (GPIO 21) is wired to the Wio-SX1262's button: used as a button
+#elif defined(TIDYOS_V4) && CONFIG_SPIRAM_MODE_OCT
   #define LED_PIN -1              // V4-R8: no LED the program may use
 #elif defined(TIDYOS_V4)
   #define LED_PIN PIN_LED         // V4: white LED, GPIO 35

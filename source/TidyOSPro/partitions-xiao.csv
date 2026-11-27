@@ -1,0 +1,11 @@
+# TidyOS Pro (Seeed XIAO ESP32S3, 8 MB flash + 8 MB PSRAM): TidyOS Pro only, no The Shelf.
+# The V3's layout with a bigger TidyOS Pro slot (3.5 MB): the XIAO build has Bluetooth keyboard + mouse and the
+# VGA output in it as well. Same names as the other tables, so the same boot menu and updater work.
+# About 3.9 MB for files (the "ffat" area), enough to hold a 3.5 MB update download when there's no SD card.
+# Name,   Type, SubType,  Offset,   Size
+nvs,      data, nvs,      0x9000,   0x5000
+otadata,  data, ota,      0xe000,   0x2000
+menu,     app,  factory,  0x10000,  0x70000
+tidyos,   app,  ota_0,    0x80000,  0x380000
+ffat,     data, fat,      0x400000, 0x3F0000
+coredump, data, coredump, 0x7F0000, 0x10000

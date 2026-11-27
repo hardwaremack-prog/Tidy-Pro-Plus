@@ -118,6 +118,34 @@
         "slot": 3145728,
         "appList": 1599164
       }
+    },
+    "xiao": {
+      "flash": 8388608,
+      "boot": {
+        "path": "firmware/pro-xiao-boot.bin",
+        "offset": 0,
+        "size": 36864
+      },
+      "menu": {
+        "path": "firmware/parts/xiao/menu.bin",
+        "offset": 65536,
+        "size": 372736,
+        "slot": 458752
+      },
+      "tidyos": {
+        "path": "firmware/tidyos-pro-xiao.bin",
+        "offset": 524288,
+        "size": 2985648,
+        "slot": 3670016,
+        "appList": 1440736
+      },
+      "tidyosFull": {
+        "path": "firmware/tidyos-pro-xiao-full.bin",
+        "offset": 524288,
+        "size": 3262960,
+        "slot": 3670016,
+        "appList": 1615884
+      }
     }
   },
   "apps": [
@@ -320,5 +348,5 @@
   ],
   "version": "3.4.41",
   "shelfVersion": "1.20.0",
-  "built": "2026-11-26"
+  "built": "2026-11-27"
 }

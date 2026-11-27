@@ -1,6 +1,6 @@
 <p align="center"><img src="docs/logo.svg" width="140" alt="TidyOS Pro logo"></p>
 
-# Tidy Pro Plus for the Heltec V3 and V4
+# Tidy Pro Plus for the Heltec V3, V4 and Seeed XIAO ESP32S3
 
 **Install: https://hardwaremack-prog.github.io/Tidy-Pro-Plus/** (Chrome or Edge, USB data cable)
 
@@ -12,6 +12,56 @@ next to the V4 and V4-R8. Pick the board at the top of the flasher.
 | **Heltec V3** | 8 MB / none | TidyOS Pro only (no Shelf: it doesn't fit next to it in 8 MB) | about **4.4 MB** |
 | Heltec V4 | 16 MB / 2 MB | TidyOS Pro + The Shelf (dual boot), or either one | 7.4 MB (12.4 MB TidyOS Pro only) |
 | Heltec V4-R8 | 16 MB / 8 MB | the same as the V4 | the same |
+| **Seeed XIAO ESP32S3** + Wio-SX1262 | 8 MB / 8 MB | TidyOS Pro only, **plus a VGA monitor and Bluetooth keyboard + mouse** | about **3.9 MB** |
+
+### New board: Seeed XIAO ESP32S3 + Wio-SX1262 kit (with VGA)
+
+The thumb-sized Seeed kit (XIAO ESP32S3 + Wio-SX1262 LoRa board) is now a choice in the flasher, next to the V3.
+It has the V4-R8's 8 MB of PSRAM, so its build turns on what the PSRAM makes room for:
+
+* **A real VGA monitor**, as well as the browser desktop: 640x480 at 60 Hz, **8 colours** (one 270 &Omega; resistor per
+  colour; TidyOS's in-between shades, like grey and dark blue, are mixed from a fine 2x2 pattern). The mouse pointer is
+  drawn on the monitor's picture only. It's made by the ESP32-S3's LCD peripheral and DMA (`vga_s3.cpp`): the sync
+  pulses are part of the data, so the timing can't drift, and the work of filling each line runs on core 1 while
+  the radio, Wi-Fi and the browser screen are on core 0. Not plugged in? It just goes unused (or switch it off).
+* **Bluetooth LE keyboard and mouse** (Settings &rarr; Bluetooth keyboard and mouse &rarr; Find devices). LE only: the S3
+  has no Classic Bluetooth, so no Bluetooth speakers either.
+* **Start-up switches / Switches**: *VGA monitor* takes the Status light's place (the XIAO has no LED to spare), and the
+  sixth switch is the *OLED screen*, as on the V3.
+* The microSD card **shares the radio's SPI bus** (D8 / D9 / D10) with its own chip select on D7. Both use the same
+  SPI bus object, so their transfers take turns.
+* The 900 MHz mesh transmits at about 20 dBm from the SX1262 itself (no front-end module on the Wio board).
+* Its own partition table (`partitions-xiao.csv`): a **3.5 MB** TidyOS Pro slot (Bluetooth and VGA don't fit in the
+  V3's 3 MB) and **3.9 MB** for files. Updates read `manifest-pro-xiao.json`.
+* Built with `-DTIDYOS_XIAO` (`ONLY=xiao ./build.sh`). TidyBoot knows the XIAO's pins too.
+
+| XIAO pin | GPIO | Goes to |
+|---|---|---|
+| D0 | 1 | 270 &Omega; &rarr; VGA pin 1 (red) |
+| D1 | 2 | 270 &Omega; &rarr; VGA pin 2 (green) |
+| D2 | 3 | 270 &Omega; &rarr; VGA pin 3 (blue) |
+| D3 | 4 | 100 &Omega; &rarr; VGA pin 13 (H sync) |
+| D6 | 43 | 100 &Omega; &rarr; VGA pin 14 (V sync) |
+| GND | | VGA pins 5, 6, 7, 8, 10 |
+| D7 | 44 | microSD CS |
+| D8 / D9 / D10 | 7 / 8 / 9 | microSD CLK / MISO / MOSI (shared with the Wio-SX1262) |
+| D4 / D5 | 5 / 6 | optional 4-pin OLED (SSD1306 128x64): SDA / SCL |
+| Wio-SX1262 button | 21 | PRG (the XIAO's BOOT button works too) |
+| Wio-SX1262 | 41 / 42 / 40 / 39 / 38 | NSS / RESET / BUSY / DIO1 / RX enable (on the board-to-board connector) |
+
+With all of that fitted, every pin is used. No battery reading (the XIAO has no divider on a pin), no GPS header.
+Clone uses GPIO 43 / 44 (V sync and the SD card's CS): switch the VGA monitor off and take the card out first.
+A save to the board's own flash pauses the line-filling interrupt for a moment, so a monitor may blank briefly then.
+
+**Status: built and checked to compile, not yet tried on a real XIAO.** The pin map for the Wio-SX1262 is the one
+Meshtastic uses for this kit.
+
+```
+XIAO ESP32S3, 8 MB (partitions-xiao.csv)
+0x010000  menu    448 KB  TidyBoot: starts TidyOS Pro, installs updates
+0x080000  tidyos  3.5 MB  TidyOS Pro (with Bluetooth and VGA)
+0x400000  ffat    3.9 MB  the board's file storage
+```
 
 ### 3.4.40: update using the phone
 

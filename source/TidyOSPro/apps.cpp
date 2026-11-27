@@ -3645,7 +3645,9 @@ public:
   uiLabel  * sdInfo, * mem;
 
   SwitchesApp() : AppFrame("Switches", Point(110, 14), Size(420, 440), &inst) {
-#ifdef TIDYOS_V3
+#if defined(TIDYOS_XIAO)
+    static const char * names[5] = { "SD card", "Wireless mesh", "VGA monitor", "OLED screen", "OLED sleep" };   // (no LED or GPS header)
+#elif defined(TIDYOS_V3)
     static const char * names[5] = { "SD card", "Wireless mesh", "Status light", "OLED screen", "OLED sleep" };   // (a V3 has no GPS header)
 #else
     static const char * names[5] = { "SD card", "Wireless mesh", "Status light", "GPS module", "OLED sleep" };
@@ -3690,11 +3692,17 @@ public:
       settingsSave();
       comsSetOn(gSet.meshOn);
     } else if (i == 2) {
+#ifdef TIDYOS_XIAO
+      gSet.vgaOn = !gSet.vgaOn;
+      settingsSave();
+      vgaS3SetOn(gSet.vgaOn);
+#else
       gSet.ledOn = !gSet.ledOn;
       settingsSave();
       ledSetOn(gSet.ledOn);
+#endif
     } else if (i == 3) {
-#ifdef TIDYOS_V3
+#if defined(TIDYOS_V3) || defined(TIDYOS_XIAO)
       gSet.oledOn = !gSet.oledOn;
 #else
       gSet.gpsOn = !gSet.gpsOn;
@@ -3731,9 +3739,14 @@ public:
     show(1, gSet.meshOn, "ON", "OFF");
     if (gSet.meshOn && !msgStarted()) set(note[1], "Starts once Wi-Fi is up (home or the TidyOS hotspot). Coms boards nearby.");
     else set(note[1], gSet.meshOn ? (rf::radioOk() && gSet.mesh900 ? "Talking with Coms boards nearby (2.4 GHz + 900 MHz LoRa)." : "Talking with Coms boards nearby (2.4 GHz). Uses a few KB.") : "Off: no Coms mesh. Shelf messages on Wi-Fi still work.");
+#ifdef TIDYOS_XIAO
+    show(2, gSet.vgaOn, "ON", "OFF");
+    set(note[2], gSet.vgaOn ? "640x480, 8 colours on D0-D3 + D6. Uses ~7 KB and a little CPU." : "Off: the desktop is only in the browser. D0-D3 + D6 left alone.");
+#else
     show(2, gSet.ledOn, "ON", "OFF");
     set(note[2], gSet.ledOn ? "Breathing = ready, flicker = SD card busy. Uses ~2 KB." : "Off: the white LED stays dark. Saves ~2 KB.");
-#ifdef TIDYOS_V3
+#endif
+#if defined(TIDYOS_V3) || defined(TIDYOS_XIAO)
     show(3, gSet.oledOn, "ON", "OFF");
     set(note[3], gSet.oledOn ? "The board's own screen. Off saves ~10 KB (next start)." : "Off: the board's screen stays dark, ~10 KB saved (next start).");
 #else

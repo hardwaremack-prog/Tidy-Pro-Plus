@@ -415,7 +415,11 @@ static void oledTask(void *)
   for (;;) {
     uint32_t now = millis();
     if (!battAt || now - battAt > 10000) { battAt = now; batteryRead(); }   // the battery, every 10 s
+#ifdef PIN_PRG2
+    bool prg = digitalRead(PIN_PRG) == LOW || digitalRead(PIN_PRG2) == LOW;
+#else
     bool prg = digitalRead(PIN_PRG) == LOW;
+#endif
     bool redraw = false;
     if (prg && !prgWas) {                                    // pressed
       downAt = now; longDone = resetDone = false;
@@ -509,7 +513,9 @@ void oledBoot(const char * msg, int pct) { if (!s_pagesOn && !s_updating) oledPr
 static void oledProgress(const char * title, const char * msg, int pct)
 {
   if (!s_statusInit) {
-#if CONFIG_SPIRAM_MODE_OCT
+#if defined(TIDYOS_XIAO)
+    // (no Vext switch: a plug-in OLED is powered from 3V3)
+#elif CONFIG_SPIRAM_MODE_OCT
     pinMode(PIN_VEXT_R8, OUTPUT); digitalWrite(PIN_VEXT_R8, LOW);
 #else
     pinMode(PIN_VEXT, OUTPUT); digitalWrite(PIN_VEXT, LOW);
@@ -541,7 +547,9 @@ void oledOff()            // switched off: the panel dark (it may still show the
 
 void oledBegin()
 {
-#if CONFIG_SPIRAM_MODE_OCT
+#if defined(TIDYOS_XIAO)
+  pinMode(PIN_PRG2, INPUT_PULLUP);
+#elif CONFIG_SPIRAM_MODE_OCT
   pinMode(PIN_VEXT_R8, OUTPUT); digitalWrite(PIN_VEXT_R8, LOW);
 #else
   pinMode(PIN_VEXT, OUTPUT); digitalWrite(PIN_VEXT, LOW);       // screen power on
