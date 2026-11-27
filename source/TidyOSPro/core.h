@@ -61,6 +61,9 @@ struct Settings {
   bool gpsOn = true;      // look for a GPS module on 39-42 at start-up (start-up switch)
   bool oledOn = true;     // the board's own OLED screen (a V3 can switch it off at start-up to save ~10 KB)
   bool oledSleep = true;  // the board's OLED goes off after 5 minutes without a button press
+#ifdef TIDYOS_VGA_OUT
+  bool vgaOn = true;      // XIAO: send the desktop to a VGA monitor too (start-up switch)
+#endif
   bool tidyBands = false; // Tidy: shade every other row
   bool hotspot = false;   // keep the TidyOS hotspot running (devices join TidyOS directly)
   bool hotspotCell = false; // hotspot: let phones keep their own (cellular) internet; off = devices treat the hotspot as their network, so 10.1.1.250 always opens
@@ -74,6 +77,19 @@ struct Settings {
   int    neatSize;    // Neat Lite font size (index within the family)
 };
 extern Settings gSet;
+
+// ---------------------------------------------------------------- VGA monitor (XIAO ESP32S3: vga_s3.cpp)
+#ifdef TIDYOS_VGA_OUT
+void vgaS3SetOn(bool on);                            // start / stop the signal (pins released when off)
+bool vgaS3On();
+void vgaS3Palette(const RGB888 * pal, int colors);   // the screen's palette and mode (2, 4 or 8 colours)
+void vgaS3Mouse(int x, int y);                       // where to draw the pointer on the monitor
+#else
+inline void vgaS3SetOn(bool) {}
+inline bool vgaS3On() { return false; }
+inline void vgaS3Palette(const RGB888 *, int) {}
+inline void vgaS3Mouse(int, int) {}
+#endif
 void settingsLoad();
 int  batteryPct();       // battery %, or -1 on USB (no battery)
 void batteryRead();

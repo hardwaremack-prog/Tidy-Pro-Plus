@@ -1,0 +1,10 @@
+{
+  "name": "TidyOS Pro for Seeed XIAO ESP32S3",
+  "version": "3.4.41",
+  "tidyos": {
+    "version": "3.4.41",
+    "app": "firmware/tidyos-pro-xiao-full.bin",
+    "size": 3262960,
+    "sha256": "af41d334cff2503117149302c91dadb23c55cfb883e3bdb09e2e909c84084074"
+  }
+}

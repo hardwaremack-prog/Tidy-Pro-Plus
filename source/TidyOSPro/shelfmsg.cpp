@@ -497,7 +497,9 @@ static void sendHello()
   size_t n = 0;
   b[n++] = MAGIC0; b[n++] = MAGIC1; b[n++] = T_HELLO; b[n++] = HOPS; b[n++] = 0;
   memcpy(b + n, &id, 4); n += 4; memcpy(b + n, &s_myNode, 4); n += 4; memcpy(b + n, &s_myNode, 4); n += 4;
-#if defined(TIDYOS_V3)
+#if defined(TIDYOS_XIAO)
+  b[n++] = 3;       // board type: an ESP32-S3 + SX1262 board without a front end, so Shelves list it like a V3
+#elif defined(TIDYOS_V3)
   b[n++] = 3;       // board type: Heltec V3 (as the Shelf boards say it)
 #elif defined(TIDYOS_V4)
   b[n++] = 4;       // board type: Heltec V4 (as the Shelf boards say it)

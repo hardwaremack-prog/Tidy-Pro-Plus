@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Tidy Pro Plus for Heltec V3 and V4</title>
+<title>Tidy Pro Plus for Heltec V3, V4 and XIAO ESP32S3</title>
 <meta name="description" content="Install Tidy Pro Plus (TidyOS Pro with a pick-what-you-install flasher), a 900 MHz field computer for AMI and RF site work, on a Heltec WiFi LoRa 32 V4 from your browser. Dual boot with The Shelf.">
 <link rel="icon" href="docs/favicon-32.png">
 <script type="module" src="https://unpkg.com/esp-web-tools@10.1.1/dist/web/install-button.js?module"></script>
@@ -131,7 +131,7 @@ details.classic{margin-top:14px}details.classic summary{cursor:pointer;color:var
     <div>
       <h1>Tidy<span class="pro">PRO+</span></h1>
       <p class="ver-pill" id="verPill" hidden></p>
-      <p class="lead"><b>Tidy Pro Plus</b> is TidyOS Pro with a flasher where you tick exactly what goes on the board and see the free space as you go. A pocket field computer on a Heltec V3 or V4: a 902–928 MHz spectrum sweep, AMI meter traffic counter, GPS site survey and an RF exposure estimate, plus the TidyOS desktop in any browser. It can share the board with The Shelf (dual boot).</p>
+      <p class="lead"><b>Tidy Pro Plus</b> is TidyOS Pro with a flasher where you tick exactly what goes on the board and see the free space as you go. A pocket field computer on a Heltec V3 or V4, or a Seeed XIAO ESP32S3 + Wio-SX1262 kit (with a VGA monitor): a 902–928 MHz spectrum sweep, AMI meter traffic counter, GPS site survey and an RF exposure estimate, plus the TidyOS desktop in any browser. It can share the board with The Shelf (dual boot).</p>
       <p style="margin-top:18px"><a class="btn alt" href="#usbfiles">&#127925; Copy music &amp; files to the board</a></p>
     </div>
   </header>
@@ -145,8 +145,9 @@ details.classic{margin-top:14px}details.classic summary{cursor:pointer;color:var
   </div>
 
   <h2>2. Pick what to install</h2>
-  <p>Tick the pieces you want copied onto the board. The bar shows where each one lands in the board's flash (16 MB on a V4, 8 MB on a V3) and how much room is left as you tick and untick. Then click <b>Install</b> and choose the board's port when Chrome asks. Chrome or Edge on a PC, Mac or Raspberry Pi. If no port shows up, hold <b>PRG</b> on the board while you plug it in.</p>
+  <p>Tick the pieces you want copied onto the board. The bar shows where each one lands in the board's flash (16 MB on a V4, 8 MB on a V3 or XIAO) and how much room is left as you tick and untick. Then click <b>Install</b> and choose the board's port when Chrome asks. Chrome or Edge on a PC, Mac or Raspberry Pi. If no port shows up, hold <b>PRG</b> (XIAO: <b>B</b>, the BOOT button) on the board while you plug it in.</p>
   <div class="warn" id="v3Note" hidden><b>Heltec V3:</b> 8 MB of flash and no PSRAM, so it gets <b>TidyOS Pro only</b> (no Shelf) with about <b>4.4 MB</b> for your files. No GPS header and no front-end amplifier on the V3: the 900 MHz tools read the SX1262 directly. The microSD card goes on the in-line pins (CS 42, MOSI 41, CLK 40, MISO 39) or CS 4, MISO 6, CLK 47, MOSI 48.</div>
+  <div class="warn" id="xiaoNote" hidden><b>Seeed XIAO ESP32S3 + Wio-SX1262:</b> 8 MB of flash (and 8 MB of PSRAM), so it gets <b>TidyOS Pro only</b> (no Shelf) with about <b>3.9 MB</b> for your files. It adds a <b>VGA monitor</b> (8 colours, 640&times;480) and <b>Bluetooth LE keyboard and mouse</b>, next to the browser desktop. No battery reading, GPS header or front-end amplifier. Wiring is in step 3.</div>
   <div class="warn">With both systems on the board, it shows a <b>5-second boot menu</b> after every restart: a short press of PRG switches between them, holding PRG starts the one shown now, and if you do nothing it starts the one you used last (it is already picked). With only one, it starts that one straight away.</div>
   <div class="card pick">
     <div class="pk-top">
@@ -154,6 +155,7 @@ details.classic{margin-top:14px}details.classic summary{cursor:pointer;color:var
         <label><input type="radio" name="board" value="v4" checked> Heltec V4</label>
         <label><input type="radio" name="board" value="v4-r8"> V4-R8 (8 MB PSRAM)</label>
         <label><input type="radio" name="board" value="v3"> Heltec V3</label>
+        <label><input type="radio" name="board" value="xiao"> XIAO ESP32S3</label>
       </div>
       <div class="presets">Quick picks:
         <button class="chip" data-preset="dual">Dual boot</button>
@@ -218,6 +220,7 @@ details.classic{margin-top:14px}details.classic summary{cursor:pointer;color:var
       <div class="card"><h3>Heltec V4 &middot; dual boot</h3><esp-web-install-button manifest="manifest-pro-v4-dual.json"><button slot="activate">Install dual boot</button></esp-web-install-button><small>About 7.5 MB.</small></div>
       <div class="card"><h3>Heltec V4 &middot; TidyOS Pro only</h3><esp-web-install-button manifest="manifest-pro-v4.json"><button slot="activate">Install TidyOS Pro</button></esp-web-install-button><small>About 3.3 MB.</small></div>
       <div class="card"><h3>Heltec V3 &middot; TidyOS Pro</h3><esp-web-install-button manifest="manifest-pro-v3-install.json"><button slot="activate">Install on a V3</button></esp-web-install-button><p class="muted" style="margin-top:10px">8 MB board: TidyOS Pro only, about 4.4 MB for files.</p></div>
+      <div class="card"><h3>XIAO ESP32S3 &middot; TidyOS Pro + VGA</h3><esp-web-install-button manifest="manifest-pro-xiao-install.json"><button slot="activate">Install on a XIAO</button></esp-web-install-button><p class="muted" style="margin-top:10px">Seeed XIAO ESP32S3 + Wio-SX1262 kit: TidyOS Pro with a VGA monitor, about 3.9 MB for files.</p></div>
       <div class="card"><h3>Heltec V4-R8</h3><esp-web-install-button manifest="manifest-pro-v4-r8-dual.json"><button slot="activate">Install dual boot (R8)</button></esp-web-install-button>
         <p style="margin-top:10px"><esp-web-install-button manifest="manifest-pro-v4-r8.json"><button slot="activate" class="btn alt">TidyOS Pro only (R8)</button></esp-web-install-button></p></div>
     </div>
@@ -303,6 +306,16 @@ details.classic{margin-top:14px}details.classic summary{cursor:pointer;color:var
     <tr><td>900 MHz antenna</td><td>The LoRa antenna connector</td><td>TidyOS Pro only <b>listens</b>; it never transmits. Use a 902&ndash;928 MHz antenna and set its gain in RF Sweep (stock V4 &asymp; 2 dBi).</td></tr>
   </table>
   <p class="muted" style="margin-top:10px">No GPS fitted? Then a card wired for The Shelf (CS 42, MOSI 41, CLK 40, MISO 39) still works.</p>
+  <h3 id="xiao-wiring">Seeed XIAO ESP32S3 + Wio-SX1262</h3>
+  <table>
+    <tr><th>Part</th><th>XIAO pins</th><th>Notes</th></tr>
+    <tr><td>VGA monitor</td><td>D0 &rarr; 270 &Omega; &rarr; VGA 1 (red) &middot; D1 &rarr; 270 &Omega; &rarr; VGA 2 (green) &middot; D2 &rarr; 270 &Omega; &rarr; VGA 3 (blue) &middot; D3 &rarr; 100 &Omega; &rarr; VGA 13 (H sync) &middot; D6 &rarr; 100 &Omega; &rarr; VGA 14 (V sync) &middot; GND &rarr; VGA 5, 6, 7, 8, 10</td><td>640&times;480 at 60 Hz, 8 colours (in-between shades are dithered). Switches &rarr; VGA monitor turns it off and frees the pins.</td></tr>
+    <tr><td>microSD module</td><td>CS <b>D7</b> &middot; CLK <b>D8</b> &middot; MISO <b>D9</b> &middot; MOSI <b>D10</b> &middot; 3V3 &middot; GND</td><td>Shares D8&ndash;D10 with the LoRa radio (each has its own chip select). 3.3 V module, or a 5 V one on the 5V pin. FAT32.</td></tr>
+    <tr><td>OLED (optional)</td><td>SDA <b>D4</b> &middot; SCL <b>D5</b> &middot; 3V3 &middot; GND</td><td>A 4-pin 128&times;64 SSD1306. Shows the address, clock, weather&hellip; The Wio board's button is PRG.</td></tr>
+    <tr><td>Keyboard + mouse</td><td>Bluetooth LE</td><td>Settings &rarr; Bluetooth keyboard and mouse &rarr; Find devices. "Bluetooth 5" / BLE ones only (the S3 has no Classic Bluetooth).</td></tr>
+    <tr><td>900 MHz antenna</td><td>The Wio-SX1262's U.FL connector</td><td>Always fit it before the radio starts.</td></tr>
+  </table>
+  <p class="muted" style="margin-top:10px">With all of that fitted every free pin is in use. Clone uses D6 / D7 too, so turn the VGA monitor off and take the SD card out before cloning a XIAO.</p>
 
   <h2>4. Connect</h2>
   <ol>
@@ -598,9 +611,18 @@ const L3 = {   // Heltec V3, 8 MB (source/TidyOSPro/partitions-v3.csv): TidyOS P
   ffat:   { at: 0x380000, size: 0x470000 },
   core:   { at: 0x7F0000, size: 0x10000 },
 };
+const LX = {   // Seeed XIAO ESP32S3, 8 MB (source/TidyOSPro/partitions-xiao.csv): TidyOS Pro only, 3.5 MB app slot
+  sys:    { at: 0x0,      size: 0x10000 },
+  menu:   { at: 0x10000,  size: 0x70000 },
+  tidyos: { at: 0x80000,  size: 0x380000 },
+  ffat:   { at: 0x400000, size: 0x3F0000 },
+  core:   { at: 0x7F0000, size: 0x10000 },
+};
 let L = L4;
-const isV3 = () => board() === 'v3';
-function useBoard() { L = isV3() ? L3 : L4; FLASH = (isV3() ? 8 : 16) * 1048576; }
+const isV3 = () => board() === 'v3' || board() === 'xiao';      // the 8 MB boards: the V3 layout, TidyOS Pro only
+const BOARD_NAME = { 'v4': 'Heltec V4', 'v4-r8': 'Heltec V4-R8', 'v3': 'Heltec V3', 'xiao': 'XIAO ESP32S3' };
+const boardName = () => BOARD_NAME[board()];
+function useBoard() { L = board() === 'xiao' ? LX : isV3() ? L3 : L4; FLASH = (isV3() ? 8 : 16) * 1048576; }
 const COLOR = { sys: '--c-sys', menu: '--c-menu', tidyos: '--c-tidy', shelf: '--c-shelf', www: '--c-www', core: '--c-sys' };
 const NAME = { menu: 'Boot menu', tidyos: 'TidyOS Pro', shelf: 'The Shelf', www: "The Shelf's web app", tidyfs: "TidyOS Pro's file storage", ffat: "The Shelf's file storage" };
 let PARTS = null;
@@ -631,12 +653,12 @@ function planBig() {
   return { P, st, writes, programs, kept, spare, empty: 0, files: L.big.size, system, free: FLASH - system - programs - kept, fill,
            fsUse: { tidyfs: false, ffat: true }, tidyThere: true, shelfThere: false, big: true };
 }
-// Heltec V3: TidyOS Pro only (its boot image carries the V3 table), the rest of the 8 MB is file storage.
+// Heltec V3 / XIAO ESP32S3: TidyOS Pro only (its boot image carries the V3 table), the rest of the 8 MB is file storage.
 function planV3() {
-  const base = PARTS.boards.v3;
+  const base = PARTS.boards[board()];
   const P = Object.assign({}, base, { tidyos: needFull() ? base.tidyosFull : base.tidyos });
   const st = { menu: on('menu') ? 'install' : 'kept', tidyos: on('tidyos') ? 'install' : (on('clear') ? 'empty' : 'kept') }, writes = [];
-  if (on('boot')) writes.push({ what: 'Bootloader + partition table (Heltec V3)', at: 0, file: P.boot.path, size: P.boot.size });
+  if (on('boot')) writes.push({ what: `Bootloader + partition table (${boardName()})`, at: 0, file: P.boot.path, size: P.boot.size });
   if (on('wnvs')) writes.push({ what: 'Forget Wi-Fi and settings', at: 0x9000, fill: 0x5000 });
   if (on('menu') || on('tidyos')) writes.push({ what: 'Start at the boot menu', at: 0xE000, fill: 0x2000 });
   for (const k of ['menu', 'tidyos']) {
@@ -741,7 +763,8 @@ function draw() {
   if (!PARTS) return;
   useBoard();
   const v3 = isV3();
-  $('v3Note').hidden = !v3;
+  $('v3Note').hidden = board() !== 'v3';
+  $('xiaoNote').hidden = board() !== 'xiao';
   if (v3) { $('c-shelf').checked = $('c-www').checked = $('c-big').checked = false; }
   $('c-shelf').disabled = v3;
   for (const b of document.querySelectorAll('[data-preset=dual],[data-preset=shelf]')) b.disabled = v3;
@@ -802,7 +825,7 @@ function draw() {
   $('m-free').textContent = r.big ? sz(L.big.size) : anyOs ? sz(L.ffat.size) : '0';
   $('m-freeLab').textContent = anyOs ? 'room for your files' : 'no system to keep files';
   $('m-freeSplit').innerHTML = anyOs ? `One storage area for ${who}${r.tidyThere ? ' (TidyOS Pro keeps its files in a TidyPro folder there; a microSD card adds more)' : ''}.` : '';
-  if (r.v3 && anyOs) $('m-freeSplit').innerHTML = 'All of it for TidyOS Pro (a microSD card adds more). The V3 has 8 MB of flash, so there is no Shelf on it.';
+  if (r.v3 && anyOs) $('m-freeSplit').innerHTML = `All of it for TidyOS Pro (a microSD card adds more). The ${board() === 'xiao' ? 'XIAO' : 'V3'} has 8 MB of flash, so there is no Shelf on it.`;
   if (r.big) $('m-freeSplit').innerHTML = "All of it for TidyOS Pro: The Shelf's program, web app and old file areas become file room (a microSD card adds more).";
   const fsBits = r.big || r.v3 ? 'TidyOS Pro' : r.fsUse.ffat ? 'shared by TidyOS Pro and The Shelf' : '';
   const copy = r.writes.reduce((n, w) => n + (w.size || 0), 0);
@@ -827,7 +850,7 @@ function draw() {
   if (canBig && !on('big')) notes.push("The Shelf is unticked, but its 5 MB still can't hold files. Tick <b>Give The Shelf's space to my files</b> to use it.");
   if (!r.writes.some(w => w.file || w.fill > 0x2000)) notes.push('Nothing to install yet: tick something.');
   $('m-note').innerHTML = notes.join('<br>');
-  $('s-wfat').textContent = r.v3 ? '4.4 MB' : r.big ? '12.4 MB' : '7.4 MB';
+  $('s-wfat').textContent = r.v3 ? sz(L.ffat.size) : r.big ? '12.4 MB' : '7.4 MB';
   $('pkGo').textContent = r.writes.length ? `Install (${sz(copy)})` : 'Install';
 }
 
@@ -854,25 +877,25 @@ $('pkGo').onclick = async () => {
   at = 'pk';
   let port;
   try { port = await pickPort(); } catch (e) { show(friendly(e)); return; }
-  const roomAfter = r.v3 ? sz(L.ffat.size) + ' (TidyOS Pro, Heltec V3)' : r.big ? sz(L.big.size) + ' (TidyOS Pro only)' : r.fsUse.ffat ? sz(L.ffat.size) + ' (shared by TidyOS Pro and The Shelf)' : 'none';
+  const roomAfter = r.v3 ? sz(L.ffat.size) + ` (TidyOS Pro, ${boardName()})` : r.big ? sz(L.big.size) + ' (TidyOS Pro only)' : r.fsUse.ffat ? sz(L.ffat.size) + ' (shared by TidyOS Pro and The Shelf)' : 'none';
   if (!confirm(`Write these to the board?\n\n${list}${appsLine}\n\nRoom for files afterwards: ${roomAfter}. Back up first (step 1) if you might want the board as it is now.`)) return;
   let c; busy(true);
   try {
     show('Connecting…', 0);
     c = await connect(port);
-    if (r.v3 && c.bytes >= 16 * 1048576) throw Object.assign(new Error(`This board has ${sz(c.bytes)} of flash: that's a Heltec V4, not a V3. Pick Heltec V4 (or V4-R8) above. Nothing was written.`), { plain: true });
-    if (c.bytes < FLASH) throw new Error(`This board has ${sz(c.bytes)} of flash, but this build needs ${sz(FLASH)}` + (r.v3 ? '' : ': a Heltec V3 has 8 MB, so pick Heltec V3 above'));
+    if (r.v3 && c.bytes >= 16 * 1048576) throw Object.assign(new Error(`This board has ${sz(c.bytes)} of flash: that's a Heltec V4, not a ${boardName()}. Pick Heltec V4 (or V4-R8) above. Nothing was written.`), { plain: true });
+    if (c.bytes < FLASH) throw new Error(`This board has ${sz(c.bytes)} of flash, but this build needs ${sz(FLASH)}` + (r.v3 ? '' : ': an 8 MB board is a Heltec V3 or a XIAO ESP32S3, so pick that above'));
     // Bootloader unticked: only safe when the board already has this layout. Otherwise the board's old partition table
     // doesn't point at the slots being written and the boot loader keeps restarting. Checked before anything is written.
     const ffatNow = await boardFfatAt(c);
     if (!on('boot') && !r.big) {
-      const want = r.v3 ? L3.ffat.at : L4.ffat.at;
-      if (ffatNow !== want) throw Object.assign(new Error(`This board doesn't have the Tidy Pro Plus ${r.v3 ? 'Heltec V3 ' : ''}layout yet` +
+      const want = L.ffat.at;
+      if (ffatNow !== want) throw Object.assign(new Error(`This board doesn't have the Tidy Pro Plus ${r.v3 ? boardName() + ' ' : ''}layout yet` +
         (ffatNow === null ? ' (no partition table found)' : '') + ', so it needs a new partition table. Tick Bootloader + partition table and install again. Nothing was written.'), { plain: true });
     }
-    if (r.v3) {                                   // first install on this V3 (another layout before): start its file storage blank
-      if (ffatNow !== L3.ffat.at && on('boot') && !r.writes.some(w => w.at === L3.ffat.at)) {
-        r.writes.push({ what: "Clear the start of the file storage (new layout)", at: L3.ffat.at, fill: 0x10000 }); r.writes.sort((a, b) => a.at - b.at);
+    if (r.v3) {                                   // first install on this V3 / XIAO (another layout before): start its file storage blank
+      if (ffatNow !== L.ffat.at && on('boot') && !r.writes.some(w => w.at === L.ffat.at)) {
+        r.writes.push({ what: "Clear the start of the file storage (new layout)", at: L.ffat.at, fill: 0x10000 }); r.writes.sort((a, b) => a.at - b.at);
       }
     } else {
     // Which layout is the board on now? (where its partition table puts the file storage)

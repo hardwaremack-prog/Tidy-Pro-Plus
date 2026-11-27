@@ -27,12 +27,22 @@
 #include "mbedtls/sha256.h"
 #include <string>
 
+#if defined(TIDYOS_XIAO)       // Seeed XIAO ESP32S3 + Wio-SX1262 (build.sh passes -DTIDYOS_XIAO)
+  #define OLED_SDA 5            // a plug-in OLED on D4 / D5, if there is one
+  #define OLED_SCL 6
+  #define OLED_RST U8X8_PIN_NONE
+  #define PIN_PRG  21           // the Wio-SX1262's button
+  #define PIN_LED  -1           // (no LED to spare)
+  #define PIN_VEXT -1           // (no Vext switch)
+#else
 #define OLED_SDA 17
 #define OLED_SCL 18
 #define OLED_RST 21
 #define PIN_PRG  0
 #define PIN_LED  35
-#if CONFIG_SPIRAM_MODE_OCT
+#endif
+#if defined(TIDYOS_XIAO)
+#elif CONFIG_SPIRAM_MODE_OCT
   #define PIN_VEXT 40         // V4-R8
 #else
   #define PIN_VEXT 36
@@ -104,12 +114,12 @@ static bool install(fs::File & f, const esp_partition_t * p, const char * name)
     int n = f.read(buf, std::min(sizeof(buf), size - done));
     if (n <= 0 || esp_ota_write(h, buf, n) != ESP_OK) { esp_ota_abort(h); return false; }
     done += n;
-    digitalWrite(PIN_LED, (millis() / 80) & 1);
+    if (PIN_LED >= 0) digitalWrite(PIN_LED, (millis() / 80) & 1);
     int pct = done * 100 / size;
     if (pct != lastPct) { lastPct = pct; char b[24]; snprintf(b, sizeof(b), "%d%%", pct); screen("Installing", name, b, "Don't unplug it"); }
   }
   bool ok = esp_ota_end(h) == ESP_OK;
-  digitalWrite(PIN_LED, LOW);
+  if (PIN_LED >= 0) digitalWrite(PIN_LED, LOW);
   return ok;
 }
 
@@ -193,9 +203,9 @@ void setup()
   Serial.begin(115200);
   delay(50);
   Serial.println("\n[TidyBoot] boot menu");
-  pinMode(PIN_LED, OUTPUT); digitalWrite(PIN_LED, LOW);
+  if (PIN_LED >= 0) { pinMode(PIN_LED, OUTPUT); digitalWrite(PIN_LED, LOW); }
   pinMode(PIN_PRG, INPUT_PULLUP);
-  pinMode(PIN_VEXT, OUTPUT); digitalWrite(PIN_VEXT, LOW);       // screen power on
+  if (PIN_VEXT >= 0) { pinMode(PIN_VEXT, OUTPUT); digitalWrite(PIN_VEXT, LOW); }   // screen power on
   delay(60);
   oled.begin(); oled.setContrast(200);
 
@@ -203,7 +213,12 @@ void setup()
   s_shelf = esp_partition_find_first(ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_ANY, "shelf");
 
   // updates first (the card in either wiring; The Shelf may keep its update in internal storage)
+#if defined(TIDYOS_XIAO)
+  pinMode(41, OUTPUT); digitalWrite(41, HIGH);                       // the LoRa radio's chip select: off the shared bus
+  s_card = mountCard(44, 8, 7, 9);                                    // CS D7, MISO D9, CLK D8, MOSI D10
+#else
   s_card = mountCard(4, 6, 47, 48) || mountCard(42, 39, 40, 41);
+#endif
   s_ffat = FFat.begin(false, "/ffat", 2, "ffat");
   tidyUpdate();
   shelfUpdate();

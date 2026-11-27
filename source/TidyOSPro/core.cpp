@@ -69,6 +69,9 @@ void settingsLoad()
   gSet.gpsOn     = s_prefs.getBool("gps", true);
   gSet.oledSleep = s_prefs.getBool("oledslp", true);
   gSet.oledOn    = s_prefs.getBool("oledon", true);
+#ifdef TIDYOS_VGA_OUT
+  gSet.vgaOn     = s_prefs.getBool("vga", true);
+#endif
   gSet.tidyBands = s_prefs.getBool("tbands", false);
   gSet.tidyFreeze = s_prefs.getBool("tfreeze", false);
   gSet.hotspot = s_prefs.getBool("hotspot", false);
@@ -107,6 +110,9 @@ void settingsSave()
   s_prefs.putBool("gps", gSet.gpsOn);
   s_prefs.putBool("oledslp", gSet.oledSleep);
   s_prefs.putBool("oledon", gSet.oledOn);
+#ifdef TIDYOS_VGA_OUT
+  s_prefs.putBool("vga", gSet.vgaOn);
+#endif
   s_prefs.putBool("tbands", gSet.tidyBands);
   s_prefs.putBool("tfreeze", gSet.tidyFreeze);
   s_prefs.putBool("hotspot", gSet.hotspot);
@@ -299,6 +305,7 @@ void themeSetup(BitmappedDisplayController * dc, int colors)
   if (colors == 8)  { auto c = (V8*)dc;  for (int i = 0; i < 8; ++i)  c->setPaletteItem(i, PAL[i]); c->lut(); }
   if (colors == 4)  { auto c = (V4*)dc;  for (int i = 0; i < 4; ++i)  c->setPaletteItem(i, PAL[i]); c->lut(); }
   if (colors == 2)  { auto c = (V2*)dc;  for (int i = 0; i < 2; ++i)  c->setPaletteItem(i, PAL[i]); c->lut(); }
+  vgaS3Palette(PAL, colors);        // (XIAO: the monitor's copy of the palette)
 
   T.win        = PAL[1];
   T.text       = PAL[0];
@@ -1344,7 +1351,9 @@ static float s_battV = -1;
 int batteryPct() { return s_batPct; }
 void batteryRead()                           // every ~10 s (the OLED task)
 {
-#ifdef TIDYOS_V4
+#if defined(TIDYOS_XIAO)
+  s_batPct = -1;                             // the XIAO has no battery divider on a pin
+#elif defined(TIDYOS_V4)
   uint32_t mv = 0;
 #if defined(TIDYOS_V3)
   // V3.0/3.1 connect the divider with ADC_CTRL LOW, V3.2 with HIGH (as The Shelf does it): read both, keep the higher
@@ -1381,10 +1390,17 @@ bool gpsSwitchOn() { return gSet.gpsOn; }
 
 // Same method as The Shelf on an ESP32 (Arduino SD library, tried at 10, 4 and 1 MHz):
 // it reads cards that ESP-IDF's own SD-over-SPI driver rejects.
-#ifdef TIDYOS_V4
+#if defined(TIDYOS_XIAO)
+SPIClass gSharedSpi(FSPI);          // XIAO: the card and the LoRa radio share D8 / D9 / D10 (each has its own chip select)
+#define s_sdSpi gSharedSpi
+#define SD_SPI_END()                // (never stopped: the radio uses it too)
+#elif defined(TIDYOS_V4)
 static SPIClass s_sdSpi(FSPI);      // the LoRa radio has HSPI
 #else
 static SPIClass s_sdSpi(VSPI);
+#endif
+#ifndef SD_SPI_END
+#define SD_SPI_END() s_sdSpi.end()
 #endif
 
 static bool mountSD(int miso, int mosi, int clk, int cs, const char * name)
@@ -1399,7 +1415,7 @@ static bool mountSD(int miso, int mosi, int clk, int cs, const char * name)
     }
     SD.end();
   }
-  s_sdSpi.end();
+  SD_SPI_END();
   Serial.printf("[TidyOS] no SD card on %s wiring\n", name);
   return false;
 }
@@ -1408,7 +1424,10 @@ bool gnssAlreadyFound();   // rf_engine.cpp: a GPS is already running on 39-42
 
 static bool mountAnySD()
 {
-#if defined(TIDYOS_V3)
+#if defined(TIDYOS_XIAO)
+  pinMode(LORA_NSS, OUTPUT); digitalWrite(LORA_NSS, HIGH);    // the radio keeps off the shared bus while the card is looked for
+  return mountSD(SD_MISO, SD_MOSI, SD_CLK, SD_CS, "XIAO (CS D7, shares D8 / D9 / D10 with the radio)");
+#elif defined(TIDYOS_V3)
   // V3: no GNSS header, so The Shelf's V3 in-line layout comes first, then the six-wire 4/6/47/48 layout
   if (mountSD(SD_INLINE_MISO, SD_INLINE_MOSI, SD_INLINE_CLK, SD_INLINE_CS, "Shelf in-line (CS 42, MOSI 41, CLK 40, MISO 39)")) return true;
   if (mountSD(SD_MISO, SD_MOSI, SD_CLK, SD_CS, "V3 six-wire (CS 4, MISO 6, CLK 47, MOSI 48)")) return true;
@@ -1453,7 +1472,7 @@ void sdTurnOff()
   settingsSave();
   if (gSDMounted) {
     SD.end();
-    s_sdSpi.end();
+    SD_SPI_END();
     gSDMounted = false;
     gSDWiring = "none";
     Serial.println("[TidyOS] SD card turned off");
@@ -1790,7 +1809,7 @@ static void bootScreenRow(Canvas & cv)
 // every KB counts without PSRAM)
 static void bootRow6(Canvas & cv)
 {
-#ifdef TIDYOS_V3
+#if defined(TIDYOS_V3) || defined(TIDYOS_XIAO)
   bootRow(cv, 5, "OLED screen", "~10 KB. Off: the board's own screen stays dark", gSet.oledOn);
 #else
   bootRow(cv, 5, "GPS module", "Off: no GPS search (pins 39-42 left alone)", gSet.gpsOn);
@@ -1813,7 +1832,11 @@ static void bootDraw(Canvas & cv)
   cv.drawText(&FONT_std_16, BW_X + 10, BW_Y + 7, "Start-up switches - save memory");
   bootRow(cv, 0, "SD card", "~15 KB. Off: files go to internal storage", gSet.sdOn);
   bootRow(cv, 1, "Wireless mesh", "A few KB. Coms boards nearby", gSet.meshOn);
+#ifdef TIDYOS_XIAO
+  bootRow(cv, 2, "VGA monitor", "D0-D3 + D6. Off: the browser only", gSet.vgaOn);
+#else
   bootRow(cv, 2, "Status light", "~2 KB. Breathes when TidyOS is ready", gSet.ledOn);
+#endif
   bootScreenRow(cv);
   bootRow(cv, 4, "Shelf messages", "~9 KB. Chat with your Shelves on Wi-Fi", gSet.shelfOn);
 #ifdef TIDYOS_V4
@@ -1898,7 +1921,7 @@ static void bootChooser()
       toggled = -1;
     }
     if (toggled == 5) {
-#ifdef TIDYOS_V3
+#if defined(TIDYOS_V3) || defined(TIDYOS_XIAO)
       gSet.oledOn = !gSet.oledOn;
       settingsSave();
       bootRow6(cv);
@@ -1918,6 +1941,16 @@ static void bootChooser()
       shown = -2;
       toggled = -1;
     }
+#ifdef TIDYOS_XIAO
+    if (toggled == 2) {
+      gSet.vgaOn = !gSet.vgaOn;
+      settingsSave();
+      vgaS3SetOn(gSet.vgaOn);
+      bootRow(cv, 2, "VGA monitor", "D0-D3 + D6. Off: the browser only", gSet.vgaOn);
+      shown = -2;
+      toggled = -1;
+    }
+#endif
     if (toggled >= 0) {
       bool * v = toggled == 0 ? &gSet.sdOn : toggled == 1 ? &gSet.meshOn : &gSet.ledOn;
       *v = !*v;
@@ -2064,9 +2097,9 @@ SET_LOOP_TASK_STACK_SIZE(16 * 1024);   // the desktop and every app run in the l
 
 void setup()
 {
-#ifdef TIDYOS_HTML5
+#if defined(TIDYOS_HTML5) && !defined(TIDYOS_XIAO)
   esp_bt_controller_mem_release(ESP_BT_MODE_BTDM);   // no Bluetooth in this edition: give its RAM to apps
-#endif
+#endif                                               // (XIAO: Bluetooth keyboard + mouse for its VGA monitor)
   Serial.setRxBufferSize(6144);   // room for a whole line from the flasher's "Copy files over USB" (256 drops bytes)
   Serial.begin(115200);
   delay(200);
@@ -2092,13 +2125,16 @@ void setup()
   if (updMode) {
     // update mode: screen + Wi-Fi only, so there's room for HTTPS
     Serial.println("[TidyOS] update mode");
-#ifndef TIDYOS_HTML5                     // (the HTML5 edition already gave it back at the top of setup(): a second
+#if !defined(TIDYOS_HTML5) || defined(TIDYOS_XIAO)   // (the HTML5 edition already gave it back at the top of setup(): a second
     esp_bt_controller_mem_release(ESP_BT_MODE_BTDM);   // release fails and aborts, which made every update reboot)
 #endif
     netBegin();
     startDisplay();
 #ifdef TIDYOS_HTML5
     releaseVgaPins();
+#ifdef TIDYOS_VGA_OUT
+    if (gSet.vgaOn) vgaS3SetOn(true);    // XIAO: the update's progress on the monitor too
+#endif
     screenBegin();
 #endif
     splashLogo();
@@ -2121,6 +2157,9 @@ void setup()
 #ifdef TIDYOS_HTML5
   startDisplay();
   releaseVgaPins();     // no monitor in this edition: free GPIO 19/18/5/... (the in-line SD wiring uses them)
+#ifdef TIDYOS_VGA_OUT
+  if (gSet.vgaOn) vgaS3SetOn(true);   // XIAO: its own VGA output
+#endif
   bootChooser();        // start-up switches (SD card, mesh, status light) before they take any RAM
   if (gSet.sdOn) oledBoot("Looking for the SD card...", 27);
   if (gSet.sdOn) gSDMounted = mountAnySD();

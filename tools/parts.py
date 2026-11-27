@@ -20,8 +20,8 @@ def trim(b):
     n = len(b.rstrip(b'\xff')); n = (n + 4095) // 4096 * 4096
     return b[:n]
 out = {'flash': 16 * 1048576, 'boards': {}}
-for b in ('v4', 'v4-r8', 'v3'):
-    v3 = b == 'v3'                       # Heltec V3: 8 MB, TidyOS Pro only (its boot image already has partitions-v3.csv)
+for b in ('v4', 'v4-r8', 'v3', 'xiao'):
+    v3 = b in ('v3', 'xiao')             # Heltec V3 / XIAO ESP32S3: 8 MB, TidyOS Pro only (boot images carry partitions-v3 / -xiao.csv)
     dual = os.path.join(fw, f'pro-{b}-main.bin' if v3 else f'pro-{b}-dual-main.bin')
     if not os.path.exists(dual): continue
     d = open(dual, 'rb').read()
@@ -29,7 +29,8 @@ for b in ('v4', 'v4-r8', 'v3'):
     info = {'flash': (8 if v3 else 16) * 1048576,
             'boot': {'path': f'firmware/pro-{b}-boot.bin', 'offset': 0, 'size': os.path.getsize(os.path.join(fw, f'pro-{b}-boot.bin'))}}
     if v3:
-        for name, (a, e) in SLOTS.items():
+        slots = dict(SLOTS, tidyos=(0x80000, 0x400000)) if b == 'xiao' else SLOTS   # partitions-xiao.csv: 3.5 MB slot
+        for name, (a, e) in slots.items():
             if name == 'menu':
                 img = trim(d[a - BASE:e - BASE]); open(os.path.join(pd, 'menu.bin'), 'wb').write(img)
                 info['menu'] = {'path': f'firmware/parts/{b}/menu.bin', 'offset': a, 'size': len(img), 'slot': e - a}

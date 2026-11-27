@@ -9,7 +9,12 @@
   #define TIDYOS_V4 1          // Heltec V4 / V4-R8 (and V3: same radio, no FEM, no GNSS header)
   // Heltec V3 (ESP32-S3FN8: 8 MB flash, no PSRAM): built with -DTIDYOS_V3. Same pins as the V4 for the
   // OLED, radio, PRG, LED, Vext and battery; no front-end module and no GNSS header. TidyOS Pro only (no Shelf).
-  #if defined(TIDYOS_V3)
+  // Seeed XIAO ESP32S3 + Wio-SX1262 kit (ESP32-S3R8: 8 MB flash, 8 MB octal PSRAM): built with -DTIDYOS_XIAO.
+  // No OLED, battery reading or GPS header of its own; 8-colour VGA, the SD card and an OLED go on its pins (below).
+  #if defined(TIDYOS_XIAO)
+    #define TIDYOS_BOARD "XIAO ESP32S3"
+    #define TIDYOS_VGA_OUT 1   // a real VGA monitor as well as the browser (vga_s3.cpp)
+  #elif defined(TIDYOS_V3)
     #define TIDYOS_BOARD "Heltec V3"
   #elif CONFIG_SPIRAM_MODE_OCT
     #define TIDYOS_BOARD "Heltec V4-R8"
@@ -47,7 +52,48 @@
   #define TIDYOS_EDITION "VGA"
 #endif
 
-#ifdef TIDYOS_V4
+#if defined(TIDYOS_XIAO)
+// ---------------- Seeed XIAO ESP32S3 + Wio-SX1262 ----------------
+// FabGL stays headless (the browser reads its screen memory); vga_s3.cpp sends the same picture to a monitor
+// with the S3's LCD peripheral: 8 colours, 640x480 at 60 Hz, one 270 ohm resistor per colour.
+#define VGA_RED1    GPIO_NUM_NC
+#define VGA_RED0    GPIO_NUM_NC
+#define VGA_GREEN1  GPIO_NUM_NC
+#define VGA_GREEN0  GPIO_NUM_NC
+#define VGA_BLUE1   GPIO_NUM_NC
+#define VGA_BLUE0   GPIO_NUM_NC
+#define VGA_HSYNC   GPIO_NUM_NC
+#define VGA_VSYNC   GPIO_NUM_NC
+#define XVGA_R      1      // D0 -> 270 ohm -> VGA pin 1 (red)
+#define XVGA_G      2      // D1 -> 270 ohm -> VGA pin 2 (green)
+#define XVGA_B      3      // D2 -> 270 ohm -> VGA pin 3 (blue)
+#define XVGA_HS     4      // D3 -> 100 ohm -> VGA pin 13 (H sync)
+#define XVGA_VS     43     // D6 -> 100 ohm -> VGA pin 14 (V sync)
+
+// microSD: shares the radio's SPI bus (D8 SCK, D9 MISO, D10 MOSI), its own chip select on D7
+#define SD_CS   44         // D7
+#define SD_MISO 8          // D9
+#define SD_CLK  7          // D8
+#define SD_MOSI 9          // D10
+
+// optional 4-pin I2C OLED (SSD1306 128x64) on D4 / D5; no reset pin and no Vext switch
+#define OLED_SDA   5       // D4
+#define OLED_SCL   6       // D5
+#define OLED_RST   255     // (U8X8_PIN_NONE)
+#define PIN_PRG    21      // the Wio-SX1262's user button (it also lights the XIAO's orange LED)
+#define PIN_PRG2   0       // the XIAO's BOOT button works too
+
+// Wio-SX1262 on the board-to-board connector (as Meshtastic's seeed_xiao_s3 variant)
+#define LORA_NSS   41
+#define LORA_SCK   7
+#define LORA_MOSI  9
+#define LORA_MISO  8
+#define LORA_RST   42
+#define LORA_BUSY  40
+#define LORA_DIO1  39
+#define LORA_RXEN  38      // RF switch: high to receive (DIO2 switches it for transmit)
+
+#elif defined(TIDYOS_V4)
 // No VGA: the screen memory only feeds the browser. FabGL never drives these (headless).
 #define VGA_RED1    GPIO_NUM_NC
 #define VGA_RED0    GPIO_NUM_NC

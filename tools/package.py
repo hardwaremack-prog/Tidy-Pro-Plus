@@ -11,13 +11,13 @@
   manifest-pro[-r8].json           what TidyOS Pro's updater reads
   shelf/ota/shelf-<b>-dual.*       what The Shelf's own updater reads on a dual-boot board
 
-<b> is v4 (ESP32-S3R2), v4-r8 (ESP32-S3R8) or v3 (ESP32-S3FN8: 8 MB flash, no PSRAM; TidyOS Pro only,
-partitions-v3.csv). The V3's install manifest is manifest-pro-v3-install.json and its updater reads
+<b> is v4 (ESP32-S3R2), v4-r8 (ESP32-S3R8), v3 (ESP32-S3FN8: 8 MB flash, no PSRAM; TidyOS Pro only,
+partitions-v3.csv) or xiao (Seeed XIAO ESP32S3: ESP32-S3R8, 8 MB flash; TidyOS Pro only, partitions-xiao.csv, VGA out). The V3's install manifest is manifest-pro-v3-install.json and its updater reads
 manifest-pro-v3.json. The settings area (0x9000-0xE000: Wi-Fi etc.) is
 never written by an install, so reinstalling keeps them.
 
 usage: package.py VERSION BUILD_DIR SHELF_WWW_V4 SHELF_WWW_R8
-  BUILD_DIR holds b-s3, b-boot, b-shelf (V4), b-s3r8, b-bootr8, b-shelfr8 (V4-R8) and b-s3v3, b-bootv3 (V3),
+  BUILD_DIR holds b-s3, b-boot, b-shelf (V4), b-s3r8, b-bootr8, b-shelfr8 (V4-R8) and b-s3v3, b-bootv3 (V3), b-s3xiao, b-bootxiao (XIAO),
   plus b-s3full / b-s3r8full (built with -DTIDY_ALL_APPS=1)
 """
 import sys, os, json, gzip, hashlib, re
@@ -37,8 +37,9 @@ def shelf_version():
     s = open(os.path.join(root, 'source', 'ShelfDual', 'ShelfV4', 'board.h')).read()
     return re.search(r'#define FW_VERSION "([^"]+)"', s).group(1)
 
-NAMES = {'v4': 'V4', 'v4-r8': 'V4-R8', 'v3': 'V3'}
-for b, sfx in (('v4', ''), ('v4-r8', 'r8'), ('v3', 'v3')):
+NAMES = {'v4': 'Heltec V4', 'v4-r8': 'Heltec V4-R8', 'v3': 'Heltec V3', 'xiao': 'Seeed XIAO ESP32S3'}
+ONLY_TIDY = ('v3', 'xiao')                         # 8 MB boards: TidyOS Pro only, no Shelf
+for b, sfx in (('v4', ''), ('v4-r8', 'r8'), ('v3', 'v3'), ('xiao', 'xiao')):
     s3, boot, shelf = (os.path.join(bd, 'b-s3' + sfx), os.path.join(bd, 'b-boot' + sfx), os.path.join(bd, 'b-shelf' + sfx))
     if not os.path.exists(os.path.join(s3, 'TidyOSPro.ino.bin')):
         print('skipping', b, '(not built)'); continue
@@ -51,23 +52,24 @@ for b, sfx in (('v4', ''), ('v4-r8', 'r8'), ('v3', 'v3')):
     if os.path.exists(fp):
         app = rd(fp); open(os.path.join(fw, f'tidyos-pro-{b}-full.bin'), 'wb').write(app)
     assert len(menu) <= TIDY - MENU, 'boot menu too big'
-    assert len(app) <= SHELF - TIDY, 'TidyOS Pro too big'
+    slot = 0x400000 - TIDY if b == 'xiao' else SHELF - TIDY     # partitions-xiao.csv: a 3.5 MB TidyOS Pro slot
+    assert len(app) <= slot, 'TidyOS Pro too big'
     bootimg = bytearray(b'\xff' * 0x9000); bootimg[0:len(bl)] = bl; bootimg[0x8000:0x8000 + len(pt)] = pt
     open(os.path.join(fw, f'pro-{b}-boot.bin'), 'wb').write(bootimg)
     main = bytearray(b'\xff' * (TIDY + len(app) - 0xE000))
     place(main, MENU, menu, 0xE000); place(main, TIDY, app, 0xE000)
     open(os.path.join(fw, f'pro-{b}-main.bin'), 'wb').write(main)
     parts = lambda m: [{'path': f'firmware/pro-{b}-boot.bin', 'offset': 0}, {'path': f'firmware/{m}', 'offset': 0xE000}]
-    name = 'TidyOS Pro for Heltec ' + NAMES[b]
+    name = 'TidyOS Pro for ' + NAMES[b]
     json.dump({'name': name, 'version': ver, 'new_install_prompt_erase': True,
                'builds': [{'chipFamily': 'ESP32-S3', 'parts': parts(f'pro-{b}-main.bin')}]},
-              open(os.path.join(root, f'manifest-pro-{b}' + ('-install' if b == 'v3' else '') + '.json'), 'w'), indent=2)
+              open(os.path.join(root, f'manifest-pro-{b}' + ('-install' if b in ONLY_TIDY else '') + '.json'), 'w'), indent=2)
     # TidyOS Pro's own updater
     json.dump({'name': name, 'version': ver,
                'tidyos': {'version': ver, 'app': f'firmware/tidyos-pro-{b}' + ('-full' if os.path.exists(fp) else '') + '.bin', 'size': len(app), 'sha256': hashlib.sha256(app).hexdigest()}},
-              open(os.path.join(root, {'v4': 'manifest-pro.json', 'v4-r8': 'manifest-pro-r8.json', 'v3': 'manifest-pro-v3.json'}[b]), 'w'), indent=2)
-    if b == 'v3':                                   # no Shelf on the V3
-        print(f'{b}: menu {len(menu)//1024} KB, TidyOS Pro {len(app)//1024} KB of {(SHELF-TIDY)//1024} KB'); continue
+              open(os.path.join(root, {'v4': 'manifest-pro.json', 'v4-r8': 'manifest-pro-r8.json', 'v3': 'manifest-pro-v3.json', 'xiao': 'manifest-pro-xiao.json'}[b]), 'w'), indent=2)
+    if b in ONLY_TIDY:                              # no Shelf on the V3 or the XIAO
+        print(f'{b}: menu {len(menu)//1024} KB, TidyOS Pro {len(app)//1024} KB of {slot//1024} KB'); continue
     # dual boot: + The Shelf and its web app
     sp = os.path.join(shelf, 'ShelfV4.ino.bin')
     wp = www_v4 if b == 'v4' else www_r8
